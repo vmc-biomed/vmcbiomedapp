@@ -118,5 +118,65 @@
   });
 </script>
 
+<!-- ═══════════════════════════════════════════════════════════
+     PUSH NOTIFICATIONS (Firebase Cloud Messaging) — confirmed request.
+     This wrapper page is the only piece of this app that runs as a
+     genuine top-level page on a stable origin, which is a hard
+     requirement for both Service Worker registration and the
+     Notification permission prompt — neither works from inside the
+     cross-origin Apps Script <iframe> above. Coordinates with the app
+     inside that iframe via postMessage: the app tells this page once
+     someone's actually logged in (so permission is only ever requested
+     at a meaningful moment, never on a cold, pre-login page load), and
+     this page hands back the resulting device token for the app to
+     save server-side.
+     ═══════════════════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+  import { getMessaging, getToken } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js';
+
+  var firebaseConfig = {
+    apiKey: "AIzaSyCLHHgmqM_8c3q_a6__Zq-l7lfpvjLiaB4",
+    authDomain: "vmc-biomed-chat.firebaseapp.com",
+    databaseURL: "https://vmc-biomed-chat-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    projectId: "vmc-biomed-chat",
+    storageBucket: "vmc-biomed-chat.firebasestorage.app",
+    messagingSenderId: "662980281608",
+    appId: "1:662980281608:web:83cb3f2968f97cd40ed8bd"
+  };
+  // Public "Web Push certificate" key (Firebase console > Project
+  // Settings > Cloud Messaging > Web configuration) — safe to embed
+  // client-side, same trust model as the apiKey above; it identifies
+  // this app to the push service, it isn't a secret credential.
+  var VAPID_KEY = 'BMEjsKTjIRouXCvTEkVW4xDymOORB6d_mrxV3kHsyTNmQCKmTvRUwcbyQHr5IMuGTpxy8k_U_HJykR2zFfdZL_U';
+
+  var _notifSetupStarted = false;
+  function _setupPushNotifications(){
+    if(_notifSetupStarted) return;
+    _notifSetupStarted = true;
+    if(!('serviceWorker' in navigator) || !('Notification' in window)) return; // unsupported browser — silently do nothing, chat/app itself is unaffected either way
+    if(Notification.permission === 'denied') return; // user already said no — don't re-prompt every login, that's exactly the nagging behavior browsers penalize
+    navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(registration){
+      return Notification.requestPermission().then(function(permission){
+        if(permission !== 'granted') return;
+        var app = initializeApp(firebaseConfig);
+        var messaging = getMessaging(app);
+        return getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration }).then(function(token){
+          if(token && frame && frame.contentWindow){
+            frame.contentWindow.postMessage({ type:'vmc-fcm-token', token: token }, '*');
+          }
+        });
+      });
+    }).catch(function(err){
+      console.warn('Push notification setup failed (non-fatal):', err);
+    });
+  }
+  window.addEventListener('message', function(event){
+    if(event.data && event.data.type === 'vmc-app-logged-in'){
+      _setupPushNotifications();
+    }
+  });
+</script>
+
 </body>
 </html>
