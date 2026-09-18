@@ -52,6 +52,23 @@
   }
   @keyframes spin{ to{ transform:rotate(360deg); } }
   #splash.hide{ opacity:0; pointer-events:none; }
+
+  /* BUG FIX: notification permission was being requested automatically
+     from inside a postMessage handler — several async hops removed
+     from any real click. Browsers require a genuine, same-frame user
+     gesture to show the permission prompt at all; without one, many
+     browsers just silently never show it (no error, nothing happens).
+     This small floating button lives directly on THIS page (not inside
+     the cross-origin iframe), so clicking it is a real, same-frame
+     gesture the browser will actually honor. */
+  #notifPrompt{
+    position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+    z-index:20; background:#0EA5E9; color:#fff; border:none;
+    padding:10px 18px; border-radius:999px; font-size:13px; font-weight:600;
+    font-family:system-ui,-apple-system,sans-serif; box-shadow:0 4px 16px rgba(0,0,0,.35);
+    display:none; align-items:center; gap:8px; cursor:pointer;
+  }
+  #notifPrompt.show{ display:flex; }
 </style>
 </head>
 <body>
@@ -67,6 +84,8 @@
   <img src="https://lh3.googleusercontent.com/d/1MZ5Ox1X0VJegn0tnkV5roNNgoHxWDfuh" alt="VMC Biomedical">
   <div class="spin"></div>
 </div>
+
+<button id="notifPrompt" type="button">🔔 Enable notifications</button>
 
 <script>
   // Hide the splash once the iframe reports it has loaded. This can't
@@ -150,31 +169,70 @@
   // this app to the push service, it isn't a secret credential.
   var VAPID_KEY = 'BMEjsKTjIRouXCvTEkVW4xDymOORB6d_mrxV3kHsyTNmQCKmTvRUwcbyQHr5IMuGTpxy8k_U_HJykR2zFfdZL_U';
 
-  var _notifSetupStarted = false;
-  function _setupPushNotifications(){
-    if(_notifSetupStarted) return;
-    _notifSetupStarted = true;
-    if(!('serviceWorker' in navigator) || !('Notification' in window)) return; // unsupported browser — silently do nothing, chat/app itself is unaffected either way
-    if(Notification.permission === 'denied') return; // user already said no — don't re-prompt every login, that's exactly the nagging behavior browsers penalize
-    navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(registration){
+  var notifBtn = document.getElementById('notifPrompt');
+
+  // Pre-registers the service worker (allowed anytime, no gesture
+  // needed) so it's ready the instant permission is granted — only the
+  // actual permission PROMPT needs to wait for a real click.
+  var _swRegistration = null;
+  function _ensureServiceWorker(){
+    if(!('serviceWorker' in navigator)) return Promise.resolve(null);
+    if(_swRegistration) return Promise.resolve(_swRegistration);
+    return navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(reg){
+      _swRegistration = reg;
+      return reg;
+    }).catch(function(err){ console.warn('Service worker registration failed:', err); return null; });
+  }
+
+  function _sendTokenToApp(token){
+    if(token && frame && frame.contentWindow){
+      frame.contentWindow.postMessage({ type:'vmc-fcm-token', token: token }, '*');
+    }
+  }
+
+  // Runs the actual getToken() call — safe to call anytime permission
+  // is already 'granted' (e.g. on every login, since a token can
+  // rotate and the stored one must always be the current one). This
+  // part needs no gesture at all, only requestPermission() itself does.
+  function _fetchAndSendToken(registration){
+    if(!('Notification' in window) || Notification.permission !== 'granted') return;
+    var app = initializeApp(firebaseConfig);
+    var messaging = getMessaging(app);
+    getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration }).then(_sendTokenToApp).catch(function(err){
+      console.warn('getToken failed (non-fatal):', err);
+    });
+  }
+
+  // BUG FIX: requestPermission() was being called automatically from
+  // inside this postMessage handler — several async hops removed from
+  // any real click, which many browsers silently refuse to honor (no
+  // error, the prompt just never appears). Now this only ever: (a) if
+  // permission was already decided in an earlier session, silently
+  // refreshes the token with no prompt needed; (b) if it's still
+  // undecided, shows a real, visible button on THIS page — clicking it
+  // is what actually requests permission, in the exact same frame as
+  // the click, which browsers reliably honor.
+  window.addEventListener('message', function(event){
+    if(!event.data || event.data.type !== 'vmc-app-logged-in') return;
+    if(!('serviceWorker' in navigator) || !('Notification' in window)) return; // unsupported browser
+    if(Notification.permission === 'granted'){
+      _ensureServiceWorker().then(function(reg){ if(reg) _fetchAndSendToken(reg); });
+    } else if(Notification.permission === 'default'){
+      notifBtn.classList.add('show');
+    }
+    // permission === 'denied': user already said no — never re-prompt, that's exactly the nagging behavior browsers penalize
+  });
+
+  notifBtn.addEventListener('click', function(){
+    notifBtn.classList.remove('show');
+    notifBtn.disabled = true;
+    _ensureServiceWorker().then(function(registration){
       return Notification.requestPermission().then(function(permission){
-        if(permission !== 'granted') return;
-        var app = initializeApp(firebaseConfig);
-        var messaging = getMessaging(app);
-        return getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration }).then(function(token){
-          if(token && frame && frame.contentWindow){
-            frame.contentWindow.postMessage({ type:'vmc-fcm-token', token: token }, '*');
-          }
-        });
+        if(permission === 'granted' && registration) _fetchAndSendToken(registration);
       });
     }).catch(function(err){
       console.warn('Push notification setup failed (non-fatal):', err);
-    });
-  }
-  window.addEventListener('message', function(event){
-    if(event.data && event.data.type === 'vmc-app-logged-in'){
-      _setupPushNotifications();
-    }
+    }).finally(function(){ notifBtn.disabled = false; });
   });
 </script>
 
