@@ -100,6 +100,30 @@
   frame.addEventListener('load', function(){ setTimeout(hideSplash, 400); });
   setTimeout(hideSplash, 4000); // fallback safety net
 
+  // BUG FIX (confirmed report — "Enable notifications" banner never
+  // appears): the message listener for the app's "I just logged in"
+  // signal used to live inside the Firebase <script type="module">
+  // block further down — but module scripts only start executing once
+  // ALL their imports finish fetching over the network (the Firebase
+  // SDK files, from a different origin), which takes real time. If the
+  // app inside the iframe restores an already-logged-in session (fast
+  // — just a local token check) before that network fetch completes,
+  // its postMessage has no listener registered yet and is silently
+  // lost forever — postMessage does not queue for listeners that
+  // attach later. Registering the listener HERE, in this plain,
+  // synchronous script (no async imports, runs immediately), closes
+  // that race: it stores the signal in a flag immediately, and calls
+  // window._vmcOnLoggedIn() right away if the module below has already
+  // finished loading, or leaves the flag for that module to check for
+  // itself once IT finishes loading (see the end of that script block).
+  window._vmcAppLoggedIn = false;
+  window.addEventListener('message', function(event){
+    if(event.data && event.data.type === 'vmc-app-logged-in'){
+      window._vmcAppLoggedIn = true;
+      if(typeof window._vmcOnLoggedIn === 'function') window._vmcOnLoggedIn();
+    }
+  });
+
   // ─── Fix for the app's bottom bar rendering "sunk" on cold-start ───
   // On a fresh launch of the installed PWA (not a normal browser tab),
   // Android hasn't finished settling its own chrome — status bar,
@@ -204,16 +228,22 @@
   }
 
   // BUG FIX: requestPermission() was being called automatically from
-  // inside this postMessage handler — several async hops removed from
-  // any real click, which many browsers silently refuse to honor (no
+  // inside a postMessage handler — several async hops removed from any
+  // real click, which many browsers silently refuse to honor (no
   // error, the prompt just never appears). Now this only ever: (a) if
   // permission was already decided in an earlier session, silently
   // refreshes the token with no prompt needed; (b) if it's still
   // undecided, shows a real, visible button on THIS page — clicking it
   // is what actually requests permission, in the exact same frame as
   // the click, which browsers reliably honor.
-  window.addEventListener('message', function(event){
-    if(!event.data || event.data.type !== 'vmc-app-logged-in') return;
+  // BUG FIX: this used to register its OWN 'message' listener here —
+  // but this whole script only starts running once its Firebase SDK
+  // imports finish fetching over the network, which can lose the "I
+  // just logged in" signal entirely if it arrives first (see the
+  // earlier plain <script> block, which now owns the actual listener
+  // and calls this function instead — directly if this module is
+  // already loaded, or via the _vmcAppLoggedIn flag below if not).
+  window._vmcOnLoggedIn = function(){
     if(!('serviceWorker' in navigator) || !('Notification' in window)) return; // unsupported browser
     if(Notification.permission === 'granted'){
       _ensureServiceWorker().then(function(reg){ if(reg) _fetchAndSendToken(reg); });
@@ -221,7 +251,8 @@
       notifBtn.classList.add('show');
     }
     // permission === 'denied': user already said no — never re-prompt, that's exactly the nagging behavior browsers penalize
-  });
+  };
+  if(window._vmcAppLoggedIn) window._vmcOnLoggedIn(); // the signal already arrived before this module finished loading — handle it now instead of missing it
 
   notifBtn.addEventListener('click', function(){
     notifBtn.classList.remove('show');
