@@ -269,3 +269,25 @@
 
 </body>
 </html>
+<script>
+// Notification status for the app's Check Notifications tool: reports this page's permission and whether a device token can be obtained, and hands a working token to the app.
+window.addEventListener('message', async function(event){
+  if(!event.data || event.data.type !== 'vmc-notif-status-request' || !event.source) return;
+  var out = { type:'vmc-notif-status', permission: ('Notification' in window) ? Notification.permission : 'unsupported', serviceWorker: ('serviceWorker' in navigator), tokenSent:false, tokenError:'', origin: location.origin };
+  try {
+    if(out.permission === 'granted' && out.serviceWorker){
+      var reg = await navigator.serviceWorker.register('firebase-messaging-sw.js');
+      var appMod = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
+      var msgMod = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js');
+      var cfg = { apiKey:'AIzaSyCLHHgmqM_8c3q_a6__Zq-l7lfpvjLiaB4', authDomain:'vmc-biomed-chat.firebaseapp.com', projectId:'vmc-biomed-chat', storageBucket:'vmc-biomed-chat.firebasestorage.app', messagingSenderId:'662980281608', appId:'1:662980281608:web:83cb3f2968f97cd40ed8bd' };
+      var fbApp = appMod.getApps().length ? appMod.getApp() : appMod.initializeApp(cfg);
+      var tok = await msgMod.getToken(msgMod.getMessaging(fbApp), { vapidKey:'BMEjsKTjIRouXCvTEkVW4xDymOORB6d_mrxV3kHsyTNmQCKmTvRUwcbyQHr5IMuGTpxy8k_U_HJykR2zFfdZL_U', serviceWorkerRegistration: reg });
+      out.tokenSent = !!tok;
+      if(!tok) out.tokenError = 'No token returned';
+      else { try { event.source.postMessage({ type:'vmc-fcm-token', token: tok }, '*'); } catch(e){} }
+    }
+  } catch(e){ out.tokenError = String((e && (e.code || e.message)) || e); }
+  try { event.source.postMessage(out, '*'); } catch(e){}
+});
+</script>
+
