@@ -1,0 +1,273 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Get the App — VMC Biomed</title>
+<meta name="description" content="Install the VMC Biomedical PM & Calibration app on your phone or computer.">
+<link rel="icon" href="https://lh3.googleusercontent.com/d/1MZ5Ox1X0VJegn0tnkV5roNNgoHxWDfuh">
+<meta name="theme-color" content="#0F2535">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --bg:#F4F7F9; --surface:#FFFFFF; --surface-2:#ECF1F4;
+    --ink:#0F2535; --ink-soft:#4C5C6B; --muted:#7C8B99;
+    --line:#DEE6EC;
+    --accent:#0EA5A0; --accent-ink:#063835; --accent-soft:#DFF5F3;
+    --navy:#0F2535;
+    --shadow: 0 1px 2px rgba(15,37,53,.06), 0 10px 30px -12px rgba(15,37,53,.18);
+    --radius-lg:20px; --radius-md:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0B1620; --surface:#101E29; --surface-2:#152735;
+      --ink:#EAF1F6; --ink-soft:#B7C6D3; --muted:#7F93A3;
+      --line:#213547;
+      --accent:#2DD4C7; --accent-ink:#06201D; --accent-soft:#0F2E2C;
+      --navy:#0B1620;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -12px rgba(0,0,0,.55);
+    }
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+    padding-inline:20px; padding-block:36px;
+    display:flex; justify-content:center;
+  }
+  img{max-width:100%;}
+  h1,h2,h3{font-family:'Manrope',system-ui,sans-serif; text-wrap:balance; margin:0;}
+  .wrap{width:100%; max-width:640px; display:flex; flex-direction:column; gap:28px;}
+
+  .hero{
+    background:linear-gradient(160deg, var(--navy) 0%, #163449 100%);
+    border-radius:var(--radius-lg);
+    padding:32px 26px 28px;
+    color:#fff;
+    box-shadow:var(--shadow);
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::before{
+    content:"";
+    position:absolute; inset:-40% -20% auto auto; width:260px; height:260px;
+    background:radial-gradient(circle, rgba(45,212,199,.35), transparent 70%);
+    pointer-events:none;
+  }
+  .hero-top{display:flex; align-items:center; gap:14px; position:relative;}
+  .hero-icon{
+    width:56px; height:56px; border-radius:14px; flex:0 0 auto;
+    background:var(--surface); display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 14px rgba(0,0,0,.25); overflow:hidden;
+  }
+  .hero-icon img{width:100%; height:100%; object-fit:cover;}
+  .hero-eyebrow{
+    font-size:11.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+    color:#8FD9D2; margin-bottom:4px;
+  }
+  .hero h1{font-size:22px; font-weight:800; color:#fff; line-height:1.15;}
+  .hero p.tag{
+    margin-top:12px; font-size:14.5px; line-height:1.55; color:#C4D3DC; max-width:46ch; position:relative;
+  }
+  .hero-cta{margin-top:22px; display:flex; gap:10px; flex-wrap:wrap; position:relative;}
+  .btn{
+    appearance:none; border:none; cursor:pointer; text-decoration:none;
+    font-family:inherit; font-weight:700; font-size:15px;
+    padding:13px 22px; border-radius:999px;
+    display:inline-flex; align-items:center; gap:8px;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--accent); color:var(--accent-ink); box-shadow:0 6px 18px -6px rgba(45,212,199,.6);}
+  .btn-ghost{background:rgba(255,255,255,.08); color:#fff; border:1.5px solid rgba(255,255,255,.28);}
+  .btn svg{width:17px; height:17px; flex:0 0 auto;}
+
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-lg); padding:22px 22px 24px; box-shadow:var(--shadow);}
+  .card h2{font-size:16.5px; font-weight:800; margin-bottom:3px;}
+  .card .sub{font-size:13px; color:var(--muted); margin-bottom:16px;}
+  .eyebrow{font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin-bottom:6px; display:block;}
+
+  .qr-row{display:flex; gap:20px; align-items:center; flex-wrap:wrap;}
+  .qr-box{background:#fff; border-radius:var(--radius-md); padding:10px; flex:0 0 auto; border:1px solid var(--line); line-height:0;}
+  .qr-box img, .qr-box canvas{display:block; width:108px; height:108px;}
+  .qr-meta{flex:1 1 200px; min-width:0;}
+  .qr-meta p{margin:0 0 10px; font-size:13.5px; color:var(--ink-soft); line-height:1.5;}
+  .link-pill{display:flex; align-items:center; gap:8px; background:var(--surface-2); border:1px solid var(--line); border-radius:999px; padding:6px 6px 6px 14px; max-width:100%;}
+  .link-pill span{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace; font-size:12.5px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0;}
+  .copy-btn{flex:0 0 auto; background:var(--ink); color:var(--bg); border:none; border-radius:999px; font-size:12px; font-weight:700; padding:7px 13px; cursor:pointer; font-family:inherit;}
+  .copy-btn.copied{background:var(--accent); color:var(--accent-ink);}
+
+  .plat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+  @media (max-width:560px){ .plat-grid{grid-template-columns:1fr;} }
+  .plat{background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-md); padding:16px 15px 17px; display:flex; flex-direction:column; gap:10px;}
+  .plat-head{display:flex; align-items:center; gap:9px;}
+  .plat-ic{width:30px; height:30px; border-radius:9px; background:var(--surface); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+  .plat-ic svg{width:17px; height:17px; color:var(--ink);}
+  .plat-head b{font-size:14px; font-weight:800;}
+  .plat ol{margin:0; padding-left:19px; font-size:13px; line-height:1.65; color:var(--ink-soft); display:flex; flex-direction:column; gap:2px;}
+  .plat ol li::marker{font-weight:700; color:var(--accent);}
+  .plat .note{font-size:11.5px; color:var(--muted); margin-top:auto; padding-top:6px; border-top:1px dashed var(--line);}
+
+  .why-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  @media (max-width:560px){ .why-grid{grid-template-columns:1fr;} }
+  .why{display:flex; gap:10px; align-items:flex-start;}
+  .why-ic{width:34px; height:34px; border-radius:10px; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+  .why-ic svg{width:18px; height:18px;}
+  .why b{display:block; font-size:13.5px; margin-bottom:2px;}
+  .why p{margin:0; font-size:12.5px; color:var(--muted); line-height:1.5;}
+
+  footer{text-align:center; font-size:12px; color:var(--muted); padding-top:4px;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="hero-top">
+      <div class="hero-icon">
+        <img src="https://lh3.googleusercontent.com/d/1MZ5Ox1X0VJegn0tnkV5roNNgoHxWDfuh" alt="VMC Biomed logo" width="56" height="56">
+      </div>
+      <div>
+        <div class="hero-eyebrow">Biomedical Engineering Section</div>
+        <h1>VMC Biomed App</h1>
+      </div>
+    </div>
+    <p class="tag">PM scheduling, calibration reports, RIS supplies, warranty and equipment tracking — in one app on your phone. Install it once and open it like any other app, no browser tabs.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="https://vmc-biomed.github.io/vmcbiomedapp/" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        Open the App
+      </a>
+      <button class="btn btn-ghost" id="scrollBtn" type="button">Then: how to install ↓</button>
+    </div>
+    <p style="position:relative; margin:14px 0 0; font-size:12px; color:#93A8B5;">Opening it doesn't add the icon by itself — the steps below do that. Takes about 20 seconds.</p>
+  </div>
+
+  <div class="card">
+    <span class="eyebrow">Scan or copy</span>
+    <h2>Get the link on your phone</h2>
+    <p class="sub">Point your camera at the code, or send the link in Viber/Messenger.</p>
+    <div class="qr-row">
+      <div class="qr-box" id="qrBox"></div>
+      <div class="qr-meta">
+        <p>Works on Android and iPhone. Scanning opens the app straight away — installing is one more tap from there.</p>
+        <div class="link-pill">
+          <span id="appUrl">vmc-biomed.github.io/vmcbiomedapp</span>
+          <button class="copy-btn" id="copyBtn" type="button">Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="howTo">
+    <span class="eyebrow">Takes 20 seconds</span>
+    <h2>How to install</h2>
+    <p class="sub">Pick your device. It only needs to be done once.</p>
+    <div class="plat-grid">
+
+      <div class="plat">
+        <div class="plat-head">
+          <div class="plat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+          <b>Android (Chrome)</b>
+        </div>
+        <ol>
+          <li>Open the link above in Chrome</li>
+          <li>Tap the <b>⋮</b> menu, top right</li>
+          <li>Tap <b>Install app</b> (or <i>Add to Home screen</i>)</li>
+          <li>Tap <b>Install</b> to confirm</li>
+        </ol>
+        <div class="note">Icon appears on your home screen, opens full-screen like any app.</div>
+      </div>
+
+      <div class="plat">
+        <div class="plat-head">
+          <div class="plat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></div>
+          <b>iPhone (Safari)</b>
+        </div>
+        <ol>
+          <li>Open the link above in <b>Safari</b> (must be Safari, not Chrome)</li>
+          <li>Tap the <b>Share</b> icon (square with an arrow ↑)</li>
+          <li>Scroll down, tap <b>Add to Home Screen</b></li>
+          <li>Tap <b>Add</b>, top right</li>
+        </ol>
+        <div class="note">On iPhone, notifications need this step first — a browser tab alone can't send them.</div>
+      </div>
+
+      <div class="plat">
+        <div class="plat-head">
+          <div class="plat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>
+          <b>Computer (Chrome/Edge)</b>
+        </div>
+        <ol>
+          <li>Open the link above</li>
+          <li>Click the <b>install icon</b> in the address bar (⊕ or a small monitor)</li>
+          <li>Click <b>Install</b></li>
+        </ol>
+        <div class="note">No icon? Use the ⋮ menu → <i>Install VMC Biomed…</i></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Why install instead of just bookmarking</h2>
+    <div class="why-grid" style="margin-top:14px;">
+      <div class="why">
+        <div class="why-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <div><b>Push notifications</b><p>PM reminders and approvals reach you even when the app is closed.</p></div>
+      </div>
+      <div class="why">
+        <div class="why-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg></div>
+        <div><b>One tap, no address bar</b><p>Opens straight to the app, full-screen, like any installed app.</p></div>
+      </div>
+      <div class="why">
+        <div class="why-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div><b>Same sign-in</b><p>Nothing new to set up — sign in with the account you already use.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Biomedical Engineering Section · Share this page's link with the team<br>Trouble installing? Ask in the group chat and we'll sort it out.</footer>
+
+</div>
+
+<script>
+  var APP_URL = "https://vmc-biomed.github.io/vmcbiomedapp/";
+
+  try {
+    new QRCode(document.getElementById("qrBox"), {
+      text: APP_URL, width: 108, height: 108,
+      colorDark: "#0F2535", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch (e) {
+    document.getElementById("qrBox").innerHTML = '<div style="width:108px;height:108px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#7C8B99;text-align:center;padding:6px;">QR unavailable — use the link</div>';
+  }
+
+  document.getElementById("copyBtn").addEventListener("click", function(){
+    var btn = this;
+    var done = function(){ btn.textContent = "Copied"; btn.classList.add("copied"); setTimeout(function(){ btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1600); };
+    try {
+      navigator.clipboard.writeText(APP_URL).then(done, fallbackCopy);
+    } catch (e) { fallbackCopy(); }
+    function fallbackCopy(){
+      try {
+        var ta = document.createElement("textarea");
+        ta.value = APP_URL; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        document.execCommand("copy"); document.body.removeChild(ta);
+        done();
+      } catch (e2) { btn.textContent = "Select & copy"; }
+    }
+  });
+
+  document.getElementById("scrollBtn").addEventListener("click", function(){
+    var el = document.getElementById("howTo");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+</script>
+</body>
+</html>
