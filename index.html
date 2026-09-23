@@ -122,6 +122,18 @@
       window._vmcAppLoggedIn = true;
       if(typeof window._vmcOnLoggedIn === 'function') window._vmcOnLoggedIn();
     }
+    // REAL BUG FIX (confirmed report — tapping "Refresh" on the new-version banner opened the raw
+    // script.google.com link in the browser instead of updating the installed app): the app's own _reloadApp()
+    // posts this message to give a wrapper a chance to reload ITSELF gracefully first, and only falls back to
+    // opening the raw Apps Script URL (via window.open(url, '_top')) if nothing handles it within 400ms. This
+    // page never listened for it, so that fallback fired every single time — on an installed PWA, navigating
+    // '_top' to script.google.com (a different origin from this page's own installed scope) makes the OS treat
+    // it as leaving the app, so Android opened it in the ordinary browser instead of updating the app in place.
+    // Reloading THIS page instead — the real, top-level, installed origin — re-fetches this page fresh and its
+    // iframe with it, landing on the new version without ever leaving the installed app.
+    if(event.data && event.data.type === 'vmc-reload-app'){
+      location.reload();
+    }
   });
 
   // ─── Fix for the app's bottom bar rendering "sunk" on cold-start ───
