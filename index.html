@@ -163,7 +163,7 @@
   // the root cause rather than requiring the scanner-popup workaround.
   var _ios = window.navigator.standalone === true;
   function _sizeAppFrame(){
-    if(_ios){ frame.style.top = '0'; frame.style.bottom = '0'; frame.style.height = 'auto'; return; }
+    if(_ios){ frame.style.top = '0'; frame.style.height = '100%'; return; }
     frame.style.height = window.innerHeight + 'px';
   }
   _sizeAppFrame();
