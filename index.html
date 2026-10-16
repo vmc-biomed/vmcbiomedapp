@@ -161,7 +161,9 @@
   // real 'resize' event, which is what the app's own
   // _updateMobileBottomBarVisibility() listens for — so this fixes
   // the root cause rather than requiring the scanner-popup workaround.
+  var _ios = window.navigator.standalone === true;
   function _sizeAppFrame(){
+    if(_ios){ frame.style.top = '0'; frame.style.bottom = '0'; frame.style.height = 'auto'; return; }
     frame.style.height = window.innerHeight + 'px';
   }
   _sizeAppFrame();
