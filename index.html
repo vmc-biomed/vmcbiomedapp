@@ -88,6 +88,51 @@
 <button id="notifPrompt" type="button">🔔 Enable notifications</button>
 
 <script>
+  /* BLUETOOTH PRINTING for a Zebra printer with Bluetooth Low Energy (for example the ZD421). The app lives in a frame that is not allowed to use Bluetooth,
+     so it asks this page to do it: 'vmc-ble-pair' lets the person choose the printer, 'vmc-ble-print' sends the label (ZPL). One phone connects at a time,
+     so the printer is let go a few seconds after each label and anyone can print next. */
+  (function(){
+    var SVC = '38eb4a80-c570-11e3-9507-0002a5d5c51b', WR = '38eb4a82-c570-11e3-9507-0002a5d5c51b', dev = null, idle = null;
+    function reply(src, msg){ try{ src.postMessage(msg, '*'); }catch(e){} }
+    function text(e){ return (e && (e.message || e.name)) ? String(e.message || e.name) : String(e || 'Bluetooth failed'); }
+    function pick(){
+      return navigator.bluetooth.requestDevice({ filters: [{ services: [SVC] }, { namePrefix: 'ZD' }, { namePrefix: 'ZQ' }, { namePrefix: 'ZT' }, { namePrefix: 'XXZ' }], optionalServices: [SVC] }).then(function(d){ dev = d; return d; });
+    }
+    function connect(){
+      var go = function(){ return dev.gatt.connected ? Promise.resolve(dev.gatt) : dev.gatt.connect(); };
+      return (dev ? Promise.resolve(dev) : pick()).then(go).then(function(g){ return g.getPrimaryService(SVC); }).then(function(s){ return s.getCharacteristic(WR); });
+    }
+    function send(chr, bytes){
+      var size = 180, at = 0;
+      function one(){
+        if(at >= bytes.length) return Promise.resolve();
+        var part = bytes.slice(at, at + size);
+        var w = chr.writeValueWithResponse ? chr.writeValueWithResponse(part) : chr.writeValue(part);
+        return w.then(function(){ at += part.length; return one(); }, function(err){
+          if(size > 20){ size = 20; return one(); } // the phone did not take the bigger pieces: the safe size for every printer
+          throw err;
+        });
+      }
+      return one();
+    }
+    function later(){ if(idle) clearTimeout(idle); idle = setTimeout(function(){ try{ if(dev && dev.gatt.connected) dev.gatt.disconnect(); }catch(e){} }, 8000); }
+    window.addEventListener('message', function(ev){
+      var d = ev.data; if(!d || (d.type !== 'vmc-ble-pair' && d.type !== 'vmc-ble-print' && d.type !== 'vmc-ble-ping')) return;
+      var src = ev.source, id = d.id;
+      if(d.type === 'vmc-ble-ping'){ reply(src, { type: 'vmc-ble-result', id: id, ok: true, supported: !!navigator.bluetooth, name: dev ? dev.name : '' }); return; }
+      if(!navigator.bluetooth){ reply(src, { type: 'vmc-ble-result', id: id, ok: false, error: 'This browser cannot use Bluetooth. Use Chrome on Android.' }); return; }
+      if(d.type === 'vmc-ble-pair'){
+        pick().then(function(x){ reply(src, { type: 'vmc-ble-result', id: id, ok: true, name: x.name || 'Zebra printer' }); }, function(e){ reply(src, { type: 'vmc-ble-result', id: id, ok: false, error: text(e) }); });
+        return;
+      }
+      var bytes = new TextEncoder().encode(String(d.zpl || ''));
+      connect().then(function(chr){ return send(chr, bytes); }).then(function(){ later(); reply(src, { type: 'vmc-ble-result', id: id, ok: true, name: dev ? dev.name : '' }); },
+        function(e){ try{ if(dev && dev.gatt.connected) dev.gatt.disconnect(); }catch(e2){} reply(src, { type: 'vmc-ble-result', id: id, ok: false, error: text(e) }); });
+    });
+  })();
+</script>
+
+<script>
   // Hide the splash once the iframe reports it has loaded. This can't
   // detect content INSIDE the iframe finishing (cross-origin — the
   // iframe is on script.google.com, this page is on GitHub Pages), only
