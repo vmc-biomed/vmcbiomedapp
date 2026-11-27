@@ -96,7 +96,7 @@
     function reply(src, msg){ try{ src.postMessage(msg, '*'); }catch(e){} }
     function text(e){ return (e && (e.message || e.name)) ? String(e.message || e.name) : String(e || 'Bluetooth failed'); }
     function pick(){
-      return navigator.bluetooth.requestDevice({ filters: [{ services: [SVC] }, { namePrefix: 'ZD' }, { namePrefix: 'ZQ' }, { namePrefix: 'ZT' }, { namePrefix: 'XXZ' }], optionalServices: [SVC] }).then(function(d){ dev = d; return d; });
+      return navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: [SVC] }).then(function(d){ dev = d; return d; });
     }
     function connect(){
       var go = function(){ return dev.gatt.connected ? Promise.resolve(dev.gatt) : dev.gatt.connect(); };
